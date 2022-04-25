@@ -1,0 +1,542 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <style>
+      #out {
+          display: flex;
+      }
+      #dir {
+          flex: 10%;
+      }
+      #code {
+          flex: 70%;
+      }
+      #rightbar {
+          flex: 20%;
+      }
+      #userinfo {
+          color: blue;
+      }
+      #new_discussion, #leave_discussion {
+          margin-bottom: 1em;
+      }
+      #dir_inner {
+          display: block;
+          position: fixed;
+          width: 10%;
+          height: 100%;
+      }
+      .dir a {
+          color: blue;
+      }
+      .dir a:hover {
+          color: white;
+          background: blue;
+      }
+      .file a {
+          color: green;
+      }
+      .file a:hover {
+          color: white;
+          background: green;
+      }
+      .annotated {
+          background: orange;
+      }
+      .code div pre span:hover {
+          background: yellow;
+      }
+      .code div pre .active {
+          background: pink;
+      }
+      .code div pre.empty {
+          color: grey;
+      }
+      #rightbar_inner {
+          disply: block;
+          position: fixed;
+          width: 20%;
+          height: 100%;
+      }
+      #comments .comment .target {
+          background: grey;
+          color: white;
+      }
+      #comments .comment .content {
+          padding-left: 0.5em;
+      }
+      #comments .comment {
+          margin-bottom: 0.5em;
+      }
+      #comments .comment.active {
+          background: #ffffdd;
+      }
+      #comments .comment:hover {
+          background: yellow;
+      }
+      #editing {
+          width: 99%;
+      }
+      #comments .comment .replys {
+          margin-left: 1em;
+      }
+      #comments {
+          display: block;
+          height: 95%;
+          overflow: auto;
+      }
+      #dir_scroll {
+          display: block;
+          height: 95%;
+          overflow: auto;
+      }
+      #discussion_title {
+          font-weight: bold;
+      }
+      #discussion_description {
+          font-style: italic;
+      }
+      #discussion_info {
+          margin-bottom: 1em;
+      }
+      .discussion_entry {
+          margin-left: 1em;
+          margin-bottom: 0.5em;
+      }
+      .discussion_description {
+          margin-left: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="out">
+      <div id="dir">
+        <div id="dir_inner">
+          {% if discussion_id == 0 %}
+          <div id="new_discussion"><a href="/{{ site_newdiscusspath }}">New Discussion</a></div>
+          {% else %}
+          <div id="leave_discussion"><a href="/whisper">Leave Discussion</a></div>
+          {% endif %}
+          <div>Dir: <span class="dir">{{ relpath }}</div>
+          <div id="dir_scroll">
+            <div class="dir"><a href="/{{ site_relpath }}/{{ relpath }}/..">../</a></div>
+            {% for dir in subdirectories %}
+            <div class="dir"><a href="/{{ site_relpath }}/{{ relpath }}/{{ dir }}">{{ dir }}/</a></div>
+            {% endfor %}
+            {% for file in files %}
+            <div class="file"><a href="/{{ site_relpath }}/{{ relpath }}/{{ file }}">{{ file }}</a></div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div id="code">
+        {{ source|safe }}
+      </div>
+      <div id="rightbar">
+        <div id="rightbar_inner">
+          <div id="userinfo">
+            {% if user %}
+            User: {{ user }}
+            <a href="/accounts/logout">[Logout]</a>
+            {% endif %}
+          </div>
+          {% if discussion_id %}
+          <div id="discussion_info">
+            <div id="discussion_title">Subject: {{ discussion_title }}</div>
+            <div id="discussion_description">Description: {{ discussion_description }}</div>
+          </div>
+          {% endif %}
+          <div id="comments">
+            {% for comment in comments %}
+            <div class="comment" id="comment-{{ comment.comment.lineno }}-{{ comment.comment.path }}">
+              <div class="target">{{ comment.comment.path }}:{{ comment.comment.lineno }} by {{ comment.comment.user }}</div>
+              <div class="content">
+                {{ comment.comment.content }}
+              </div>
+              <div class="replys">
+                {% for reply in comment.replys %}
+                <div class="comment" id="comment-{{ reply.lineno }}-{{ reply.path }}">
+                  <div class="target">by {{ reply.user }}</div>
+                  <div class="content">
+                    {{ reply.content }}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script language="javascript">
+    var annotated_lines = [];
+    var user_name = "{{ user }}";
+    var relpath = "{{ relpath }}";
+    var site_relpath = "{{ site_relpath }}";
+    var src_filename = "{{ filename }}";
+    var site_cmtpath = "{{ site_cmtpath }}";
+    var discussion_id = "{{ discussion_id }}";
+
+    function prepare_annotated_lines() {
+        if (!src_filename) return;
+
+        let filepath = relpath + "/" + src_filename;
+        let cmts = document.getElementsByClassName("comment");
+        var i;
+        for (i = 0; i < cmts.length; i++) {
+            let lineno = parseInt(cmts[i].id.split("-")[1]);
+            let path = cmts[i].id.split("-").slice(2).join("-");
+            if (path != filepath) continue;
+            annotated_lines.push(lineno);
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function setCookie(name, value) {
+        const d = new Date();
+        d.setTime(d.getTime() + (3 * 60 * 1000));
+        let expires = "expires="+d.toUTCString();
+        document.cookie = name + '=' + encodeURIComponent(value) + ';' + expires + ';path=/';
+    }
+
+    function mark_annotated(annotated_lines) {
+        annotated_lines.forEach(function (lineno) {
+            let line = document.getElementById("line-" + lineno);
+            line.className += " annotated";
+        });
+    }
+    function unmark_annotated(annotated_lines) {
+        annotated_lines.forEach(function (lineno) {
+            let line = document.getElementById("line-" + lineno);
+            line.className = line.className.replace(" annotated", "");
+        });
+    }
+    mark_annotated(annotated_lines);
+
+    function mark_active_line(lineno) {
+        let line = document.getElementById("line-" + lineno);
+        line.className += " active";
+    }
+    function unmark_active_line(lineno) {
+        let line = document.getElementById("line-" + lineno);
+        line.className = line.className.replace(" active", "");
+    }
+
+    var current_active_cmt = document.getElementById("comment-73");
+    var stop_editing = null;
+    var editing_cmt = null;
+
+    function childOf(e, nodeName) {
+        let children = [];
+        var i;
+        for (i = 0; i < e.childNodes.length; i++) {
+            let n = e.childNodes[i];
+            if (n.nodeName == nodeName) children.push(n);
+        }
+        return children;
+    }
+
+    function find_line_no(tgt) {
+        let source = document.getElementsByClassName("source")[0];
+        let pre = childOf(source, "PRE")[0];
+        var target = tgt;
+        while (target.parentNode != pre) {
+            target = target.parentNode;
+            if (target == null) {
+                return -1;
+            }
+        }
+        let lineno = parseInt(target.id.replace("line-", ""));
+        return lineno;
+    }
+
+    function add_new_reply(filename, lineno) {
+        let cmt_id = "comment-" + lineno + "-" + filename;
+        let cmt = document.getElementById(cmt_id);
+        if (!cmt) {
+            return;
+        }
+
+        let new_reply = document.createElement("div");
+        new_reply.className = "reply";
+        new_reply.innerHTML = "<div class=\"target\">by " + user_name + "</div><div class=\"content\"><div><textarea id=\"editing\" rows=\"10\"></textarea><input id=\"editing-save\" type=\"button\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div></div>";
+        let replys = childOf(cmt, "DIV")[2];
+        replys.appendChild(new_reply);
+
+        let save_btn = document.getElementById("editing-save");
+        let cancel_btn = document.getElementById("editing-cancel");
+        let editing_txt = document.getElementById("editing");
+        function save() {
+            turn_editing_to_comment(new_reply);
+            stop_editing = null;
+            editing_cmt = null;
+            submit_comment(filename, lineno, discussion_id,
+                           editing_txt.value);
+        }
+        function cancel() {
+            replys.removeChild(new_reply);
+            stop_editing = null;
+            editing_cmt = null;
+        }
+
+        stop_editing = cancel;
+        editing_cmt = cmt;
+
+        save_btn.addEventListener("click", save);
+        cancel_btn.addEventListener("click", cancel);
+    }
+
+    function scroll_to_line(filename, lineno) {
+        if (filename != relpath + "/" + src_filename) {
+            setCookie('whisper_scroll_lineno', lineno);
+
+            let url = "/" + site_relpath + "/" + filename;
+            window.location = url;
+            return;
+        }
+        let line_id = "line-" + lineno;
+        let line = document.getElementById(line_id);
+        line.scrollIntoView();
+    }
+
+    function activate_comment(filename, lineno) {
+        let cmt_id = "comment-" + lineno + "-" + filename;
+        let cmt = document.getElementById(cmt_id);
+        if (cmt) {
+            cmt.className += " active";
+
+            if (current_active_cmt) {
+                current_active_cmt.className =
+                    current_active_cmt.className.replace(" active", "");
+                let info = get_comment_info(current_active_cmt);
+                unmark_active_line(info[1]);
+                if (childOf(current_active_cmt, "DIV").length == 4) {
+                    current_active_cmt.removeChild(childOf(current_active_cmt, "DIV")[3]);
+                }
+            }
+
+            current_active_cmt = cmt;
+
+            if (filename == relpath + "/" + src_filename)
+                mark_active_line(lineno);
+            if (editing_cmt != cmt) {
+                let reply_div = document.createElement("div");
+                reply_div.innerHTML = "<input id=\"reply_btn\" type=\"button\" value=\"Reply\"/>";
+                cmt.appendChild(reply_div);
+                let reply_btn = document.getElementById("reply_btn");
+                reply_btn.addEventListener("click", function (e) {
+                    let info = get_comment_info(cmt);
+                    let filename = info[0];
+                    add_new_reply(filename, lineno);
+                    cmt.removeChild(reply_div);
+                });
+
+                scroll_to_line(filename, lineno);
+            }
+        }
+    }
+
+    function init_code_action() {
+        prepare_annotated_lines();
+        mark_annotated(annotated_lines);
+
+        let source = document.getElementsByClassName("source")[0];
+        let pre = childOf(source, "PRE")[0];
+
+        pre.addEventListener("click", function (e) {
+            if (stop_editing)
+                stop_editing();
+
+            let lineno = find_line_no(e.target);
+            if (lineno > 0) {
+                let filename = relpath + "/" + src_filename;
+                activate_comment(filename, lineno);
+            }
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+        pre.addEventListener("dblclick", function (e) {
+            if (discussion_id == 0) {
+                alert("Please, start a \"New Discussion\" before adding comments!!")
+                return;
+            }
+
+            if (stop_editing)
+                stop_editing();
+
+            let lineno = find_line_no(e.target);
+            if (lineno > 0) {
+                if (annotated_lines.indexOf(lineno) < 0) {
+                    let filename = relpath + "/" + src_filename;
+                    add_new_comment(filename, lineno);
+                }
+            }
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+    }
+    init_code_action();
+
+    function submit_comment(filename, lineno,
+                            discussion_id, content) {
+        let url = "/" + site_cmtpath + "/" + filename;
+        let params =
+            "&line_no=" + lineno +
+            "&discussion_id=" + discussion_id +
+            "&content=" + encodeURI(content)
+        let csrftoken = getCookie("csrftoken");
+
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader("Content-Type",
+                             "application/x-www-form-urlencoded");
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        xhr.send(params);
+    }
+
+    function add_new_comment(filename, lineno) {
+        let comment_p = document.createElement("div");
+        comment_p.innerHTML = "<div class=\"comment\" id=\"comment-" + lineno + "-" + filename + "\"><div class=\"target\">" + filename + ":" + lineno + " by " + user_name + "</div><div class=\"content\"><div><textarea id=\"editing\" rows=\"10\"></textarea><div><input type=\"button\" id=\"editing-save\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div></div></div><div class=\"replys\"></div></div>";
+        let comments = document.getElementById("comments");
+        let comment = childOf(comment_p, "DIV")[0];
+        comments.appendChild(comment);
+        annotated_lines.push(lineno);
+        mark_annotated([lineno]);
+
+        let save_btn = document.getElementById("editing-save");
+        let cancel_btn = document.getElementById("editing-cancel");
+        let editing_txt = document.getElementById("editing");
+
+        function save() {
+            submit_comment(filename, lineno, discussion_id,
+                           editing_txt.value);
+            turn_editing_to_comment(comment);
+            stop_editing = null;
+            editing_cmt = null;
+        };
+
+        function cancel() {
+            comments.removeChild(comment);
+            unmark_annotated([lineno]);
+            annotated_lines =
+                annotated_lines.filter(function (x) {
+                    return x != lineno;
+                });
+            stop_editing = null;
+            editing_cmt = null;
+            current_active_cmt = null;
+            unmark_active_line(lineno);
+        }
+
+        stop_editing = cancel;
+        editing_cmt = comment;
+
+        save_btn.addEventListener("click", save);
+        cancel_btn.addEventListener("click", cancel);
+
+        activate_comment(filename, lineno);
+    }
+
+    function turn_editing_to_comment(comment) {
+        let content = childOf(childOf(childOf(comment, "DIV")[1], "DIV")[0], "TEXTAREA")[0].value;
+        let div = childOf(comment, "DIV")[1];
+        div.innerHTML = content;
+    }
+
+    function get_comment_info(tgt) {
+        let comments = document.getElementById("comments");
+        let comment = tgt;
+        while (comment.parentNode != comments) {
+            comment = comment.parentNode;
+            if (comment == null) {
+                return null;
+            }
+        }
+        let lineno = parseInt(comment.id.replace("comment-", ""));
+        let filename = comment.id.split("-").slice(2).join("-");
+        return [filename, lineno, comment];
+    }
+
+    function show_source(filename, lineno) {
+    }
+
+    function turn_comment_to_editing(comment) {
+        let content = childOf(comment, "DIV")[1].innerHTML;
+        childOf(comment, "DIV")[1].innerHTML = "<div><textarea id=\"editing\" rows=\"10\"></textarea></div>";
+        let editing = childOf(childOf(childOf(comment, "DIV")[1], "DIV")[0], "TEXTAREA")[0];
+        editing.value = content;
+
+        stop_editing = function () {
+            turn_editing_to_comment(comment);
+            stop_editing = null;
+            editing_cmt = null;
+        };
+        editing_cmt = comment;
+    }
+
+    function init_comment_action() {
+        let comments = document.getElementById("comments");
+
+        comments.addEventListener("click", function (e) {
+            let info = get_comment_info(e.target);
+            if (info != null) {
+                let filename = info[0];
+                let lineno = info[1];
+                let comment = info[2];
+                if(stop_editing && comment != editing_cmt)
+                    stop_editing();
+                show_source(filename, lineno);
+                activate_comment(filename, lineno);
+            }
+        });
+
+        /*
+        comments.addEventListener("dblclick", function (e) {
+            let info = get_comment_info(e.target);
+            if (info != null) {
+                let filename = info[0];
+                let lineno = info[1];
+                let comment = info[2];
+                if (comment != editing_cmt) {
+                    if(stop_editing)
+                        stop_editing();
+                    turn_comment_to_editing(comment);
+                }
+            }
+        });
+        */
+    }
+    init_comment_action();
+
+    function do_requested_scroll_to_line() {
+        let lineno = getCookie('whisper_scroll_lineno');
+        if (!lineno) return;
+        lineno = parseInt(lineno);
+        if (!lineno) return;
+
+        setCookie('whisper_scroll_lineno', 0);
+        let filename = relpath + "/" + src_filename;
+        activate_comment(filename, parseInt(lineno));
+        scroll_to_line(filename, lineno);
+    }
+    do_requested_scroll_to_line();
+  </script>
+</html>

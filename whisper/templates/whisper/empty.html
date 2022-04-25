@@ -1,0 +1,24 @@
+<div class="code"><div class="source">
+    <pre class="empty">
+<h3>USAGE</h3>
+
+Use the navigator at left side to browse the repository.
+Do <b>double-click</b> on a line in a file to add a <em>new comment</em>.
+
+The file will be loaded and scrolled to the line when you
+click on a comment.  It will show a "Reply" botton as well.
+
+    </pre>
+</div></div>
+
+<div id="discussion_list">
+  <h3>Latest Discussions</h3>
+  {% for discuss in discussions %}
+  <div class="discussion_entry">
+    <a href="/whisper/discuss/{{ discuss.id }}/p">
+      {{ discuss.title }}
+    </a>
+    <div class="discussion_description">{{ discuss.description }}</div>
+  </div>
+  {% endfor %}
+</div>

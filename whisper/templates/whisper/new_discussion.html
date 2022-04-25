@@ -1,0 +1,22 @@
+{% block content %}
+
+<h2>New Discussion</h2>
+
+<p>Plese fill title and description for the new discussion</p>
+
+<form method="post" action="/whisper/create_discussion">
+  {% csrf_token %}
+  <table>
+    <tr>
+      <td>Title</td>
+      <td><input type="text" name="title" maxlength="128" size="64"/></td>
+    </tr>
+    <tr>
+      <td>Description</td>
+      <td><textarea name="description" cols="128" rows="20"></textarea></td>
+    </tr>
+  </table>
+  <input type="submit" value="Submit"/>
+</form>
+
+{% endblock %}
