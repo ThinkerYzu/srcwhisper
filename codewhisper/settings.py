@@ -127,3 +127,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = "/whisper/code"
 
 WHISPER_REPO_PATH = os.path.join(BASE_DIR, 'whisper_repo')
+
+EMPTY_MAX_DISCUSSIONS = 20

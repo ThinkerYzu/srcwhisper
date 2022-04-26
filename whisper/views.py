@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template import loader
@@ -44,7 +45,7 @@ def get_comments(discussion_id):
     return comments
 
 def empty(request):
-    discussions = Discussion.objects.order_by('publish_time').reverse()[:10]
+    discussions = Discussion.objects.order_by('publish_time').reverse()[:settings.EMPTY_MAX_DISCUSSIONS]
     discussions = [{'id': dis.id,
                     'title': dis.title,
                     'description': dis.description}
