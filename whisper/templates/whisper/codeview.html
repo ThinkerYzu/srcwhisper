@@ -180,6 +180,11 @@
     var site_cmtpath = "{{ site_cmtpath }}";
     var discussion_id = "{{ discussion_id }}";
 
+    function must_login(reason) {
+        alert("Please login before " + reason + "!");
+        window.location = "/accounts/login";
+    }
+
     function prepare_annotated_lines() {
         if (!src_filename) return;
 
@@ -343,6 +348,10 @@
                 cmt.appendChild(reply_div);
                 let reply_btn = document.getElementById("reply_btn");
                 reply_btn.addEventListener("click", function (e) {
+                    if (user_name == "") {
+                        must_login("replying");
+                        return;
+                    }
                     let info = get_comment_info(cmt);
                     let filename = info[0];
                     add_new_reply(filename, lineno);
@@ -376,6 +385,10 @@
         pre.addEventListener("dblclick", function (e) {
             if (discussion_id == 0) {
                 alert("Please, start a \"New Discussion\" before adding comments!!")
+                return;
+            }
+            if (user_name == "") {
+                must_login("adding a new comment");
                 return;
             }
 

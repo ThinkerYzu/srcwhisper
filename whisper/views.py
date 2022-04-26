@@ -219,8 +219,6 @@ def index(request, **kws):
     else:
         return redirect('/whisper/code')
 
-    if func != 'code' and '_auth_user_id' not in request.session:
-        return redirect('/accounts/login')
     site_cmtpath = 'whisper/comment'
     site_newdiscusspath = 'whisper/new_discussion'
     return show_view(request, path, site_relpath, site_cmtpath,
