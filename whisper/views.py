@@ -143,7 +143,7 @@ def add_comment(request, path):
         reply_to = None
         pass
 
-    user = User.objects.get(id=1)
+    user = User.objects.get(id=request.session['_auth_user_id'])
     cmt = Comment(discussion=dis,
                   reply_to=reply_to,
                   user=user,
