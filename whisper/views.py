@@ -166,7 +166,7 @@ def create_discussion(request):
         pass
     description = request.POST['description']
     if len(description) > 512:
-        description = description[512]
+        description = description[:512]
         pass
     discussion = Discussion(title=title, description=description,
                             publish_time=datetime.now())

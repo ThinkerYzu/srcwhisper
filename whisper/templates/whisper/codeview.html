@@ -125,7 +125,7 @@
             <div class="dir"><a href="/{{ site_relpath }}/{{ relpath }}/{{ dir }}">{{ dir }}/</a></div>
             {% endfor %}
             {% for file in files %}
-            <div class="file"><a href="/{{ site_relpath }}/{{ relpath }}/{{ file }}">{{ file }}</a></div>
+            <div class="file"><a href="/{{ site_relpath }}/{{ relpath }}/{{ file }}">{{ file|escape }}</a></div>
             {% endfor %}
           </div>
         </div>
@@ -143,8 +143,8 @@
           </div>
           {% if discussion_id %}
           <div id="discussion_info">
-            <div id="discussion_title">Subject: {{ discussion_title }}</div>
-            <div id="discussion_description">Description: {{ discussion_description }}</div>
+            <div id="discussion_title">Subject: {{ discussion_title|escape }}</div>
+            <div id="discussion_description">Description: {{ discussion_description|escape }}</div>
           </div>
           {% endif %}
           <div id="comments">
@@ -152,14 +152,14 @@
             <div class="comment" id="comment-{{ comment.comment.lineno }}-{{ comment.comment.path }}">
               <div class="target">{{ comment.comment.path }}:{{ comment.comment.lineno }} by {{ comment.comment.user }}</div>
               <div class="content">
-                {{ comment.comment.content }}
+                {{ comment.comment.content|escape }}
               </div>
               <div class="replys">
                 {% for reply in comment.replys %}
                 <div class="comment" id="comment-{{ reply.lineno }}-{{ reply.path }}">
                   <div class="target">by {{ reply.user }}</div>
                   <div class="content">
-                    {{ reply.content }}
+                    {{ reply.content|escape }}
                   </div>
                 </div>
                 {% endfor %}
