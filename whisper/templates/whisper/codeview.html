@@ -151,7 +151,7 @@
           {% if discussion_id %}
           <div id="discussion_info">
             <div id="discussion_title">Subject: {{ discussion_title|escape }}</div>
-            <div id="discussion_description">Description: {{ discussion_description|escape }}</div>
+            <div id="discussion_description">{{ discussion_description|escape }}</div>
           </div>
           {% endif %}
           <div id="comments">
@@ -570,6 +570,14 @@
         let i = 0;
         for (i = 0; i < contents.length; i++) {
             markdown_content(contents[i]);
+        }
+
+        let description = document.getElementById("discussion_description");
+        if (description) {
+            let txt = description.innerHTML;
+            let convert = new showdown.Converter();
+            let html = convert.makeHtml(txt);
+            description.innerHTML = html;
         }
     }
     init_markdown_content();
