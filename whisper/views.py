@@ -56,13 +56,17 @@ def empty(request):
     source = template.render(context, request)
     return source
 
-def show_view(request, path, site_relpath, site_cmtpath,
+# site_rel_root is common URL root of source files.
+#
+# It is whisper/discuss/<ID>/p in a discussion, or whisper/code not in
+# a discussion.
+def show_view(request, path, site_rel_root, site_cmtpath,
               site_newdiscusspath,
               discussion_id, comments):
+    origin = path
     if srcs.is_file(path):
-        origin = path
-        filename = os.path.basename(path)
-        path = os.path.dirname(path).strip('/')
+        filename = srcs.get_basename(path)
+        path = srcs.get_dirname(path).strip('/')
         try:
             lexer = get_lexer_for_filename(filename)
         except:
@@ -74,7 +78,7 @@ def show_view(request, path, site_relpath, site_cmtpath,
                                       full=True,
                                       linespans='line',
                                       title=filename)
-            code = open(srcs.abs(origin)).read()
+            code = srcs.open_file(origin).read()
             source = highlight(code, lexer, formatter)
         except:
             source = empty(request)
@@ -91,7 +95,10 @@ def show_view(request, path, site_relpath, site_cmtpath,
         username = ''
         pass
 
-    dirs, files, relpath = srcs.list(path)
+    # The path related to site_rel_root
+    rel_url = srcs.get_rel_url(origin)
+
+    dirs, files, rel_dir = srcs.list(path)
     dirs.sort()
     files.sort()
     template = loader.get_template('whisper/codeview.html')
@@ -101,9 +108,10 @@ def show_view(request, path, site_relpath, site_cmtpath,
         'files': files,
         'user': username,
         'source': source,
-        'relpath': relpath,
+        'rel_dir': rel_dir,
+        'rel_url': rel_url,
         'filename': filename,
-        'site_relpath': site_relpath,
+        'site_rel_root': site_rel_root,
         'site_cmtpath': site_cmtpath,
         'site_newdiscusspath': site_newdiscusspath,
         'discussion_id': discussion_id,
@@ -189,7 +197,7 @@ def index(request, **kws):
     comments = []
     discussion_id = 0
     if func == 'code':
-        site_relpath = 'whisper/code'
+        site_rel_root = 'whisper/code'
         if len(path_parts) == 1:
             path = ''
         else:
@@ -201,7 +209,7 @@ def index(request, **kws):
         if comments is None:
             return
 
-        site_relpath = os.path.join('whisper', func, str(discussion_id), 'p')
+        site_rel_root = os.path.join('whisper', func, str(discussion_id), 'p')
         if len(path_parts) == 3:
             path = ''
         else:
@@ -224,7 +232,7 @@ def index(request, **kws):
 
     site_cmtpath = 'whisper/comment'
     site_newdiscusspath = 'whisper/new_discussion'
-    return show_view(request, path, site_relpath, site_cmtpath,
+    return show_view(request, path, site_rel_root, site_cmtpath,
                      site_newdiscusspath,
                      discussion_id, comments)
 

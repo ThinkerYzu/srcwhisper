@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 from whisper.register import register
+from whisper.user_code import upload_file
 
 urlpatterns = [
     path('', lambda request: redirect('whisper/code')),
@@ -24,4 +25,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     path('register', register, name='register'),
+    path('user_code/upload_file/<int:discussion_id>', upload_file, name='user_code_upload'),
 ]

@@ -18,8 +18,12 @@
       #userinfo {
           color: blue;
       }
-      #new_discussion, #leave_discussion {
-          margin-bottom: 1em;
+      #new_discussion {
+          margin-top: 0.5em;
+      }
+      #leave_discussion {
+          margin-bottom: 0.2em;
+          font-style: italic;
       }
       #dir_inner {
           display: block;
@@ -43,6 +47,9 @@
       }
       .annotated {
           background: orange;
+      }
+      #code {
+          overflow: auto;
       }
       .code div pre span:hover {
           background: yellow;
@@ -97,6 +104,9 @@
           height: 95%;
           overflow: auto;
       }
+      #discussion_title {
+          margin-top: 0.3em;
+      }
       #discussion_title, #discussion_author {
           font-weight: bold;
       }
@@ -123,19 +133,14 @@
     <div id="out">
       <div id="dir">
         <div id="dir_inner">
-          {% if discussion_id == 0 %}
-          <div id="new_discussion"><a href="/{{ site_newdiscusspath }}">New Discussion</a></div>
-          {% else %}
-          <div id="leave_discussion"><a href="/whisper">Leave Discussion</a></div>
-          {% endif %}
-          <div>Dir: <span class="dir">{{ relpath }}</div>
+          <div>Dir: <span class="dir">{{ rel_dir }}</div>
           <div id="dir_scroll">
-            <div class="dir"><a href="/{{ site_relpath }}/{{ relpath }}/..">../</a></div>
+            <div class="dir"><a href="/{{ site_rel_root }}/{{ rel_dir }}/..">../</a></div>
             {% for dir in subdirectories %}
-            <div class="dir"><a href="/{{ site_relpath }}/{{ relpath }}/{{ dir }}">{{ dir }}/</a></div>
+            <div class="dir"><a href="/{{ site_rel_root }}/{{ rel_dir }}/{{ dir }}">{{ dir }}/</a></div>
             {% endfor %}
             {% for file in files %}
-            <div class="file"><a href="/{{ site_relpath }}/{{ relpath }}/{{ file }}">{{ file|escape }}</a></div>
+            <div class="file"><a href="/{{ site_rel_root }}/{{ rel_dir }}/{{ file }}">{{ file|escape }}</a></div>
             {% endfor %}
           </div>
         </div>
@@ -159,6 +164,16 @@
             <div id="discussion_title">Subject: {{ discussion_title|escape }}</div>
             <div id="discussion_author">Author: {{ discussion_user|escape }}</div>
             <div id="discussion_description">{{ discussion_description|escape }}</div>
+          </div>
+          {% endif %}
+          {% if discussion_id == 0 %}
+          <div id="new_discussion"><a href="/{{ site_newdiscusspath }}">Start New Discussion</a></div>
+          {% else %}
+          <div id="leave_discussion">
+            <a href="/whisper">Leave Discussion</a> /
+            <a href="/user_code/upload_file/{{ discussion_id }}">
+              Upload Code
+            </a>
           </div>
           {% endif %}
           <div id="comments">
@@ -188,8 +203,10 @@
   <script language="javascript">
     var annotated_lines = [];
     var user_name = "{{ user }}";
-    var relpath = "{{ relpath }}";
-    var site_relpath = "{{ site_relpath }}";
+    // The path of the source code related to site_rel_root.
+    var rel_url = "{{ rel_url }}";
+    // The root url of all source files.
+    var site_rel_root = "{{ site_rel_root }}";
     var src_filename = "{{ filename }}";
     var site_cmtpath = "{{ site_cmtpath }}";
     var discussion_id = "{{ discussion_id }}";
@@ -202,13 +219,12 @@
     function prepare_annotated_lines() {
         if (!src_filename) return;
 
-        let filepath = relpath + "/" + src_filename;
         let cmts = document.getElementsByClassName("comment");
         var i;
         for (i = 0; i < cmts.length; i++) {
             let lineno = parseInt(cmts[i].id.split("-")[1]);
             let path = cmts[i].id.split("-").slice(2).join("-");
-            if (path != filepath) continue;
+            if (path != rel_url) continue;
             annotated_lines.push(lineno);
         }
     }
@@ -324,10 +340,10 @@
     }
 
     function scroll_to_line(filename, lineno) {
-        if (filename != relpath + "/" + src_filename) {
+        if (filename != rel_url) {
             setCookie('whisper_scroll_lineno', lineno);
 
-            let url = "/" + site_relpath + "/" + filename;
+            let url = "/" + site_rel_root + "/" + filename;
             window.location = url;
             return;
         }
@@ -354,7 +370,7 @@
 
             current_active_cmt = cmt;
 
-            if (filename == relpath + "/" + src_filename)
+            if (filename == rel_url)
                 mark_active_line(lineno);
             if (editing_cmt != cmt) {
                 let reply_div = document.createElement("div");
@@ -390,7 +406,7 @@
 
             let lineno = find_line_no(e.target);
             if (lineno > 0) {
-                let filename = relpath + "/" + src_filename;
+                let filename = rel_url;
                 activate_comment(filename, lineno);
             }
             e.preventDefault();
@@ -412,7 +428,7 @@
             let lineno = find_line_no(e.target);
             if (lineno > 0) {
                 if (annotated_lines.indexOf(lineno) < 0) {
-                    let filename = relpath + "/" + src_filename;
+                    let filename = rel_url;
                     add_new_comment(filename, lineno);
                 }
             }
@@ -559,7 +575,7 @@
         if (!lineno) return;
 
         setCookie('whisper_scroll_lineno', 0);
-        let filename = relpath + "/" + src_filename;
+        let filename = rel_url;
         activate_comment(filename, parseInt(lineno));
         scroll_to_line(filename, lineno);
     }

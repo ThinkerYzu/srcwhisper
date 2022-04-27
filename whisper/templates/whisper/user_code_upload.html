@@ -1,0 +1,9 @@
+{% block content %}
+<br>
+<form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{form.as_p}}
+  <button style="background-color:#F4EB16; color:blue" class="btn btn-outline-info" type="submit">Upload</button>
+</form>
+
+{% endblock %}
