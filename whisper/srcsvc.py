@@ -12,16 +12,21 @@ class SourceService(object):
 
     def get_ucode_path(self, path):
         hashcode = path.replace(':ucode:/', '', 1)
-        return os.path.join(self.root_user_code, hashcode)
+        fullpath = os.path.join(self.root_user_code, hashcode)
+        fullpath = os.path.abspath(fullpath)
+        return fullpath
 
     def is_file(self, path):
         if path.startswith(':ucode:'):
+            fullpath = self.get_ucode_path(path)
+            if not fullpath.startswith(self.root_user_code):
+                return False
             return os.path.exists(self.get_ucode_path(path))
 
         fullpath = os.path.join(self.root, path)
         fullpath = os.path.abspath(fullpath)
         if not fullpath.startswith(self.root):
-            return None
+            return False
         st = os.stat(fullpath)
         mode = st[0]
         ft = mode & 0o170000
