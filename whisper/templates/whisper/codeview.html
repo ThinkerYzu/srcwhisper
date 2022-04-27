@@ -146,6 +146,9 @@
             {% if user %}
             User: {{ user }}
             <a href="/accounts/logout">[Logout]</a>
+            {% else %}
+            <a href="/accounts/login">Login</a> /
+            <a href="/register">Sign-up</a>
             {% endif %}
           </div>
           {% if discussion_id %}

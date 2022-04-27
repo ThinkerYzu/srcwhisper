@@ -16,10 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from whisper.register import register
 
 urlpatterns = [
     path('', lambda request: redirect('whisper/code')),
     path('whisper', include('whisper.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('register', register, name='register'),
 ]
