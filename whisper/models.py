@@ -6,6 +6,8 @@ class Discussion(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=128)
     description = models.TextField()
+    user = models.ForeignKey(DJUser,
+                             on_delete=models.PROTECT)
     publish_time = models.DateTimeField()
     pass
 

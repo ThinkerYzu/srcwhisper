@@ -97,7 +97,7 @@
           height: 95%;
           overflow: auto;
       }
-      #discussion_title {
+      #discussion_title, #discussion_author {
           font-weight: bold;
       }
       #discussion_description {
@@ -112,6 +112,9 @@
       }
       .discussion_description {
           margin-left: 2em;
+      }
+      #discussion_list .dis_desc_content {
+          font-style: italic;
       }
     </style>
   </head>
@@ -154,6 +157,7 @@
           {% if discussion_id %}
           <div id="discussion_info">
             <div id="discussion_title">Subject: {{ discussion_title|escape }}</div>
+            <div id="discussion_author">Author: {{ discussion_user|escape }}</div>
             <div id="discussion_description">{{ discussion_description|escape }}</div>
           </div>
           {% endif %}

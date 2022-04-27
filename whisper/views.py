@@ -48,6 +48,7 @@ def empty(request):
     discussions = Discussion.objects.order_by('publish_time').reverse()[:settings.EMPTY_MAX_DISCUSSIONS]
     discussions = [{'id': dis.id,
                     'title': dis.title,
+                    'author': dis.user.username,
                     'description': dis.description}
                    for dis in discussions]
     context = {'discussions': discussions}
@@ -86,12 +87,6 @@ def show_view(request, path, site_relpath, site_cmtpath,
         username = ''
         pass
 
-    if discussion_id:
-        dis = Discussion.objects.get(pk=discussion_id)
-        discussion_title = dis.title
-        discussion_description = dis.description
-        pass
-
     dirs, files, relpath = srcs.list(path)
     dirs.sort()
     files.sort()
@@ -113,6 +108,7 @@ def show_view(request, path, site_relpath, site_cmtpath,
         dis = Discussion.objects.get(pk=discussion_id)
         context['discussion_title'] = dis.title
         context['discussion_description'] = dis.description
+        context['discussion_user'] = dis.user.username
         pass
 
     return HttpResponse(template.render(context, request))
@@ -168,7 +164,9 @@ def create_discussion(request):
     if len(description) > 512:
         description = description[:512]
         pass
+    user = User.objects.get(id=request.session['_auth_user_id'])
     discussion = Discussion(title=title, description=description,
+                            user=user,
                             publish_time=datetime.now())
     discussion.save()
     return redirect('/whisper/discuss/' + str(discussion.id) + '/p/')

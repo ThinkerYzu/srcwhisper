@@ -18,7 +18,10 @@ click on a comment.  It will show a "Reply" botton as well.
     <a href="/whisper/discuss/{{ discuss.id }}/p">
       {{ discuss.title }}
     </a>
-    <div class="discussion_description">{{ discuss.description }}</div>
+    <div class="discussion_description">
+      {{ discuss.author|escape }}:
+      <span class="dis_desc_content">{{ discuss.description|escape }}</span>
+    </div>
   </div>
   {% endfor %}
 </div>
