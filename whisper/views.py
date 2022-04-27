@@ -12,7 +12,7 @@ import os
 import itertools
 
 from pygments import highlight
-from pygments.lexers import get_lexer_for_filename
+from pygments.lexers import get_lexer_for_filename, MarkdownLexer
 from pygments.formatters import HtmlFormatter
 
 from datetime import datetime
@@ -65,6 +65,10 @@ def show_view(request, path, site_relpath, site_cmtpath,
         path = os.path.dirname(path).strip('/')
         try:
             lexer = get_lexer_for_filename(filename)
+        except:
+            lexer = MarkdownLexer()
+            pass
+        try:
             formatter = HtmlFormatter(linenos=True,
                                       cssclass="source",
                                       full=True,
