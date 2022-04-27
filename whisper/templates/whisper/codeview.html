@@ -66,6 +66,12 @@
       #comments .comment .content {
           padding-left: 0.5em;
       }
+      #comments .comment .content :first-child {
+          margin-top: 0px;
+      }
+      #comments .comment .content :last-child {
+          margin-bottom: 0px;
+      }
       #comments .comment {
           margin-bottom: 0.5em;
       }
@@ -109,6 +115,7 @@
       }
     </style>
   </head>
+  <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
   <body>
     <div id="out">
       <div id="dir">
@@ -152,14 +159,14 @@
             <div class="comment" id="comment-{{ comment.comment.lineno }}-{{ comment.comment.path }}">
               <div class="target">{{ comment.comment.path }}:{{ comment.comment.lineno }} by {{ comment.comment.user }}</div>
               <div class="content">
-                {{ comment.comment.content|escape }}
+                <textarea>{{ comment.comment.content|escape }}</textarea>
               </div>
               <div class="replys">
                 {% for reply in comment.replys %}
                 <div class="comment" id="comment-{{ reply.lineno }}-{{ reply.path }}">
                   <div class="target">by {{ reply.user }}</div>
                   <div class="content">
-                    {{ reply.content|escape }}
+                    <textarea>{{ reply.content|escape }}</textarea>
                   </div>
                 </div>
                 {% endfor %}
@@ -282,7 +289,7 @@
 
         let new_reply = document.createElement("div");
         new_reply.className = "reply";
-        new_reply.innerHTML = "<div class=\"target\">by " + user_name + "</div><div class=\"content\"><div><textarea id=\"editing\" rows=\"10\"></textarea><input id=\"editing-save\" type=\"button\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div></div>";
+        new_reply.innerHTML = "<div class=\"target\">by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input id=\"editing-save\" type=\"button\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div>";
         let replys = childOf(cmt, "DIV")[2];
         replys.appendChild(new_reply);
 
@@ -427,7 +434,7 @@
 
     function add_new_comment(filename, lineno) {
         let comment_p = document.createElement("div");
-        comment_p.innerHTML = "<div class=\"comment\" id=\"comment-" + lineno + "-" + filename + "\"><div class=\"target\">" + filename + ":" + lineno + " by " + user_name + "</div><div class=\"content\"><div><textarea id=\"editing\" rows=\"10\"></textarea><div><input type=\"button\" id=\"editing-save\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div></div></div><div class=\"replys\"></div></div>";
+        comment_p.innerHTML = "<div class=\"comment\" id=\"comment-" + lineno + "-" + filename + "\"><div class=\"target\">" + filename + ":" + lineno + " by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input type=\"button\" id=\"editing-save\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div><div class=\"replys\"></div></div>";
         let comments = document.getElementById("comments");
         let comment = childOf(comment_p, "DIV")[0];
         comments.appendChild(comment);
@@ -469,9 +476,8 @@
     }
 
     function turn_editing_to_comment(comment) {
-        let content = childOf(childOf(childOf(comment, "DIV")[1], "DIV")[0], "TEXTAREA")[0].value;
-        let div = childOf(comment, "DIV")[1];
-        div.innerHTML = content;
+        let content = childOf(comment, "DIV")[1];
+        markdown_content(content);
     }
 
     function get_comment_info(tgt) {
@@ -493,7 +499,7 @@
 
     function turn_comment_to_editing(comment) {
         let content = childOf(comment, "DIV")[1].innerHTML;
-        childOf(comment, "DIV")[1].innerHTML = "<div><textarea id=\"editing\" rows=\"10\"></textarea></div>";
+        childOf(comment, "DIV")[1].innerHTML = "<textarea id=\"editing\" rows=\"10\"></textarea>";
         let editing = childOf(childOf(childOf(comment, "DIV")[1], "DIV")[0], "TEXTAREA")[0];
         editing.value = content;
 
@@ -551,5 +557,21 @@
         scroll_to_line(filename, lineno);
     }
     do_requested_scroll_to_line();
+
+    function markdown_content(content) {
+        let txt = childOf(content, "TEXTAREA")[0].value;
+        let convert = new showdown.Converter();
+        let html = convert.makeHtml(txt);
+        content.innerHTML = html;
+    }
+
+    function init_markdown_content() {
+        let contents = document.getElementsByClassName("content");
+        let i = 0;
+        for (i = 0; i < contents.length; i++) {
+            markdown_content(contents[i]);
+        }
+    }
+    init_markdown_content();
   </script>
 </html>
