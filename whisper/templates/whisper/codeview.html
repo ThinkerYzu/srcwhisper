@@ -182,14 +182,14 @@
           {% endif %}
           <div id="comments">
             {% for comment in comments %}
-            <div class="comment" id="comment-{{ comment.comment.lineno }}-{{ comment.comment.path }}" cmt_id="{{ comment.comment.id }}">
+            <div class="comment" id="comment-{{ comment.comment.lineno }}-{{ comment.comment.path }}" user="{{ comment.comment.user }}" cmt_id="{{ comment.comment.id }}">
               <div class="target">{{ comment.comment.path }}:{{ comment.comment.lineno }} by {{ comment.comment.user }}</div>
               <div class="content">
                 <textarea>{{ comment.comment.content|escape }}</textarea>
               </div>
               <div class="replys">
                 {% for reply in comment.replys %}
-                <div class="comment" id="reply-{{ reply.id }}-{{ reply.lineno }}-{{ reply.path }}" cmt_id="{{ reply.id }}">
+                <div class="comment" id="reply-{{ reply.id }}-{{ reply.lineno }}-{{ reply.path }}" user="{{ reply.user }}" cmt_id="{{ reply.id }}">
                   <div class="target">by {{ reply.user }}</div>
                   <div class="content">
                     <textarea>{{ reply.content|escape }}</textarea>
@@ -317,6 +317,7 @@
         let new_reply = document.createElement("div");
         new_reply.className = "reply";
         new_reply.id = "reply-" + 0 + "-" + lineno + "-" + filename;
+        new_reply.setAttribute("user", user_name);
         new_reply.innerHTML = "<div class=\"target\">by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input id=\"editing-save\" type=\"button\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div>";
         let replys = childOf(cmt, "DIV")[2];
         replys.appendChild(new_reply);
@@ -488,7 +489,7 @@
 
     function add_new_comment(filename, lineno) {
         let comment_p = document.createElement("div");
-        comment_p.innerHTML = "<div class=\"comment\" id=\"comment-" + lineno + "-" + filename + "\" cmt_id=\"0\"><div class=\"target\">" + filename + ":" + lineno + " by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input type=\"button\" id=\"editing-save\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div><div class=\"replys\"></div></div>";
+        comment_p.innerHTML = "<div class=\"comment\" id=\"comment-" + lineno + "-" + filename + "\" user=\""+ user_name + "\" cmt_id=\"0\"><div class=\"target\">" + filename + ":" + lineno + " by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input type=\"button\" id=\"editing-save\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div><div class=\"replys\"></div></div>";
         let comments = document.getElementById("comments");
         let comment = childOf(comment_p, "DIV")[0];
         comments.appendChild(comment);
@@ -631,7 +632,8 @@
                 let lineno = info[1];
                 let comment = info[2];
                 let cmt_id = info[3];
-                if (comment != editing_cmt) {
+                if (comment != editing_cmt &&
+                    comment.getAttribute("user") == user_name) {
                     if(stop_editing)
                         stop_editing();
                     turn_comment_to_editing(comment);
