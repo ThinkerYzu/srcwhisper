@@ -6,6 +6,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from .srcsvc import SourceService
 
 from .models import File, Discussion, Comment
+from .models import DiscussionHistory, CommentHistory
 from django.contrib.auth.models import User
 
 import os
@@ -24,7 +25,8 @@ def get_comments(discussion_id):
     if not discussion:
         return None
 
-    comments = [{'path': cmt.filename.path,
+    comments = [{'id': cmt.id,
+                 'path': cmt.filename.path,
                  'lineno': cmt.lineno,
                  'user': cmt.user.username,
                  'content': cmt.content,
@@ -152,13 +154,41 @@ def add_comment(request, path):
         pass
 
     user = User.objects.get(id=request.session['_auth_user_id'])
+    now = datetime.now()
     cmt = Comment(discussion=dis,
                   reply_to=reply_to,
                   user=user,
                   filename=fo,
                   lineno=line_no,
                   content=content,
-                  publish_time=datetime.now())
+                  publish_time=now,
+                  last_modified=now)
+    cmt.save()
+
+    return HttpResponse('OK:' + str(cmt.id))
+
+def update_comment(request, path):
+    parts = path.split('/')
+    cmt_id = int(parts[1])
+
+    cmt = Comment.objects.get(pk=cmt_id)
+
+    user = cmt.user
+    user_id = int(request.session['_auth_user_id'])
+    if user.id != user_id:
+        raise 'Invalid user ID'
+
+    content = request.POST['content']
+    if content == cmt.content:
+        return HttpResponse('OK')
+
+    chist = CommentHistory(comment=cmt,
+                           content=cmt.content,
+                           publish_time=cmt.last_modified)
+    cmt.content = content
+    cmt.last_modified = datetime.now()
+
+    chist.save()
     cmt.save()
 
     return HttpResponse('OK')
@@ -181,6 +211,49 @@ def create_discussion(request):
                             user=user,
                             publish_time=datetime.now())
     discussion.save()
+
+    return redirect('/whisper/discuss/' + str(discussion.id) + '/p/')
+
+def update_discussion(request, path):
+    discussion_id = int(path.split('/')[1])
+    discussion = Discussion.objects.get(pk=discussion_id)
+
+    if 'title' not in request.POST:
+        context = {
+            'title': discussion.title,
+            'description': discussion.description,
+        }
+        form = loader.get_template('whisper/update_discussion.html').render(context, request)
+        return HttpResponse(form)
+
+    title = request.POST['title']
+    if len(title) > 128:
+        title = title[:128]
+        pass
+    description = request.POST['description']
+    if len(description) > 512:
+        description = description[:512]
+        pass
+
+    user = discussion.user
+    user_id = int(request.session['_auth_user_id'])
+    if user.id != user_id:
+        raise 'Invalid user ID'
+
+    if title == discussion.title and description == discussion.description:
+        return redirect('/whisper/discuss/' + str(discussion.id) + '/p/')
+
+    dhist = DiscussionHistory(discussion=discussion,
+                              title=discussion.title,
+                              description=discussion.description,
+                              publish_time=discussion.publish_time)
+    dhist.save()
+
+    discussion.title = title
+    discussion.description = description
+    discussion.publish_time = datetime.now()
+    discussion.save()
+
     return redirect('/whisper/discuss/' + str(discussion.id) + '/p/')
 
 @ensure_csrf_cookie
@@ -219,6 +292,10 @@ def index(request, **kws):
         if '_auth_user_id' not in request.session:
             return redirect('/accounts/login')
         return add_comment(request, path)
+    elif func == 'update_comment':
+        if '_auth_user_id' not in request.session:
+            return redirect('/accounts/login')
+        return update_comment(request, path)
     elif func == 'new_discussion':
         if '_auth_user_id' not in request.session:
             return redirect('/accounts/login')
@@ -227,6 +304,10 @@ def index(request, **kws):
         if '_auth_user_id' not in request.session:
             return redirect('/accounts/login')
         return create_discussion(request)
+    elif func == 'update_discussion':
+        if '_auth_user_id' not in request.session:
+            return redirect('/accounts/login')
+        return update_discussion(request, path)
     else:
         return redirect('/whisper/code')
 

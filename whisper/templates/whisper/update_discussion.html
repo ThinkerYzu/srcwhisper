@@ -1,0 +1,20 @@
+{% block content %}
+
+<h2>Update Discussion</h2>
+
+<form method="post">
+  {% csrf_token %}
+  <table>
+    <tr>
+      <td>Title</td>
+      <td><input type="text" name="title" maxlength="128" size="64" value="{{ title }}"/></td>
+    </tr>
+    <tr>
+      <td>Description</td>
+      <td><textarea name="description" cols="128" rows="20">{{ description }}</textarea></td>
+    </tr>
+  </table>
+  <input type="submit" value="Submit"/>
+</form>
+
+{% endblock %}

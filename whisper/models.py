@@ -11,6 +11,15 @@ class Discussion(models.Model):
     publish_time = models.DateTimeField()
     pass
 
+class DiscussionHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    discussion = models.ForeignKey('Discussion',
+                                   on_delete=models.CASCADE)
+    title = models.CharField(max_length=128)
+    description = models.TextField()
+    publish_time = models.DateTimeField()
+    pass
+
 class Comment(models.Model):
     id = models.AutoField(primary_key=True)
     discussion = models.ForeignKey('Discussion',
@@ -23,6 +32,15 @@ class Comment(models.Model):
     filename = models.ForeignKey('File', on_delete=models.PROTECT)
     lineno = models.IntegerField()
 
+    content = models.TextField()
+    publish_time = models.DateTimeField()
+    last_modified = models.DateTimeField()
+    pass
+
+class CommentHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    comment = models.ForeignKey('Comment',
+                                on_delete=models.CASCADE)
     content = models.TextField()
     publish_time = models.DateTimeField()
     pass

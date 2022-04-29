@@ -162,7 +162,7 @@
           {% if discussion_id %}
           <div id="discussion_info">
             <div id="discussion_title">Subject: {{ discussion_title|escape }}</div>
-            <div id="discussion_author">Author: {{ discussion_user|escape }}</div>
+            <div id="discussion_author" user="{{ discussion_user }}">Author: {{ discussion_user|escape }}</div>
             <div id="discussion_description">{{ discussion_description|escape }}</div>
           </div>
           {% endif %}
@@ -174,18 +174,22 @@
             <a href="/user_code/upload_file/{{ discussion_id }}">
               Upload Code
             </a>
+            {% if discussion_user == user %}
+            /
+            <a href="/whisper/update_discussion/{{ discussion_id }}">Modfy</a>
+            {% endif %}
           </div>
           {% endif %}
           <div id="comments">
             {% for comment in comments %}
-            <div class="comment" id="comment-{{ comment.comment.lineno }}-{{ comment.comment.path }}">
+            <div class="comment" id="comment-{{ comment.comment.lineno }}-{{ comment.comment.path }}" cmt_id="{{ comment.comment.id }}">
               <div class="target">{{ comment.comment.path }}:{{ comment.comment.lineno }} by {{ comment.comment.user }}</div>
               <div class="content">
                 <textarea>{{ comment.comment.content|escape }}</textarea>
               </div>
               <div class="replys">
                 {% for reply in comment.replys %}
-                <div class="comment" id="comment-{{ reply.lineno }}-{{ reply.path }}">
+                <div class="comment" id="reply-{{ reply.id }}-{{ reply.lineno }}-{{ reply.path }}" cmt_id="{{ reply.id }}">
                   <div class="target">by {{ reply.user }}</div>
                   <div class="content">
                     <textarea>{{ reply.content|escape }}</textarea>
@@ -312,24 +316,42 @@
 
         let new_reply = document.createElement("div");
         new_reply.className = "reply";
+        new_reply.id = "reply-" + 0 + "-" + lineno + "-" + filename;
         new_reply.innerHTML = "<div class=\"target\">by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input id=\"editing-save\" type=\"button\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div>";
         let replys = childOf(cmt, "DIV")[2];
         replys.appendChild(new_reply);
 
+
         let save_btn = document.getElementById("editing-save");
         let cancel_btn = document.getElementById("editing-cancel");
         let editing_txt = document.getElementById("editing");
-        function save() {
+        function save(evt) {
             turn_editing_to_comment(new_reply);
             stop_editing = null;
             editing_cmt = null;
-            submit_comment(filename, lineno, discussion_id,
-                           editing_txt.value);
+            let xhr =
+                submit_comment(filename, lineno, discussion_id,
+                           editing_txt.value,
+                           function (evt) {
+                               let resp = xhr.responseText;
+                               if (!resp.startsWith("OK:")) {
+                                   console.log(resp);
+                               }
+                               let reply_id = parseInt(resp.replace("OK:", ""));
+                               new_reply.id = "reply-" + reply_id + "-" + lineno + "-" + filename;
+                               new_reply.setAttribute("cmt_id", reply_id);
+                           },
+                           function (evt) {
+                               console.log("Fail to save a reply");
+                           });
+            evt.stopPropagation();
         }
-        function cancel() {
+        function cancel(evt) {
             replys.removeChild(new_reply);
             stop_editing = null;
             editing_cmt = null;
+
+            evt.stopPropagation();
         }
 
         stop_editing = cancel;
@@ -382,6 +404,10 @@
                         must_login("replying");
                         return;
                     }
+
+                    if (stop_editing)
+                        stop_editing();
+
                     let info = get_comment_info(cmt);
                     let filename = info[0];
                     add_new_reply(filename, lineno);
@@ -439,7 +465,8 @@
     init_code_action();
 
     function submit_comment(filename, lineno,
-                            discussion_id, content) {
+                            discussion_id, content,
+                            ok, err) {
         let url = "/" + site_cmtpath + "/" + filename;
         let params =
             "&line_no=" + lineno +
@@ -448,16 +475,20 @@
         let csrftoken = getCookie("csrftoken");
 
         let xhr = new XMLHttpRequest();
+        xhr.addEventListener("load", ok);
+        xhr.addEventListener("error", err);
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type",
                              "application/x-www-form-urlencoded");
         xhr.setRequestHeader("X-CSRFToken", csrftoken);
         xhr.send(params);
+
+        return xhr;
     }
 
     function add_new_comment(filename, lineno) {
         let comment_p = document.createElement("div");
-        comment_p.innerHTML = "<div class=\"comment\" id=\"comment-" + lineno + "-" + filename + "\"><div class=\"target\">" + filename + ":" + lineno + " by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input type=\"button\" id=\"editing-save\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div><div class=\"replys\"></div></div>";
+        comment_p.innerHTML = "<div class=\"comment\" id=\"comment-" + lineno + "-" + filename + "\" cmt_id=\"0\"><div class=\"target\">" + filename + ":" + lineno + " by " + user_name + "</div><div class=\"content\"><textarea id=\"editing\" rows=\"10\"></textarea><input type=\"button\" id=\"editing-save\" value=\"Save\"/><input id=\"editing-cancel\" type=\"button\" value=\"Cancel\"/></div><div class=\"replys\"></div></div>";
         let comments = document.getElementById("comments");
         let comment = childOf(comment_p, "DIV")[0];
         comments.appendChild(comment);
@@ -468,15 +499,29 @@
         let cancel_btn = document.getElementById("editing-cancel");
         let editing_txt = document.getElementById("editing");
 
-        function save() {
-            submit_comment(filename, lineno, discussion_id,
-                           editing_txt.value);
+        function save(evt) {
+            let xhr =
+                submit_comment(filename, lineno, discussion_id,
+                           editing_txt.value,
+                           function (evt) {
+                               let resp = xhr.responseText;
+                               if (!resp.startsWith("OK:")) {
+                                   console.log(resp);
+                               }
+                               let cmt_id = parseInt(resp.replace("OK:", ""));
+                               comment.setAttribute("cmt_id", cmt_id);
+                           },
+                           function (evt) {
+                               console.log("Fail to save a comment");
+                           });
             turn_editing_to_comment(comment);
             stop_editing = null;
             editing_cmt = null;
+
+            evt.stopPropagation();
         };
 
-        function cancel() {
+        function cancel(evt) {
             comments.removeChild(comment);
             unmark_annotated([lineno]);
             annotated_lines =
@@ -487,6 +532,9 @@
             editing_cmt = null;
             current_active_cmt = null;
             unmark_active_line(lineno);
+
+            if (evt)
+                evt.stopPropagation();
         }
 
         stop_editing = cancel;
@@ -506,27 +554,53 @@
     function get_comment_info(tgt) {
         let comments = document.getElementById("comments");
         let comment = tgt;
-        while (comment.parentNode != comments) {
+        while ((comment.parentNode != comments &&
+                comment.parentNode.className != "replys") ||
+               comment.className.indexOf("comment") < 0) {
             comment = comment.parentNode;
-            if (comment == null) {
+            if (comment.parentNode == null) {
                 return null;
             }
         }
-        let lineno = parseInt(comment.id.replace("comment-", ""));
-        let filename = comment.id.split("-").slice(2).join("-");
-        return [filename, lineno, comment];
+        if (comment.id.startsWith("comment-")) {
+            let lineno = parseInt(comment.id.replace("comment-", ""));
+            let filename = comment.id.split("-").slice(2).join("-");
+            let cmt_id = parseInt(comment.getAttribute("cmt_id"));
+            return [filename, lineno, comment, cmt_id];
+        }
+        let parts = comment.id.split("-");
+        let lineno = parseInt(parts[2]);
+        let filename = parts.slice(3).join("-");
+        let cmt_id = parseInt(comment.getAttribute("cmt_id"));
+        return [filename, lineno, comment, cmt_id]
     }
 
     function show_source(filename, lineno) {
     }
 
+    function update_comment(cmt_id, content) {
+        let csrftoken = getCookie("csrftoken");
+        let url = "/whisper/update_comment/" + cmt_id;
+        let params = "content=" + encodeURI(content);
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader("Content-Type",
+                             "application/x-www-form-urlencoded");
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        xhr.send(params);
+    }
+
     function turn_comment_to_editing(comment) {
-        let content = childOf(comment, "DIV")[1].innerHTML;
+        let content = childOf(comment, "DIV")[1];
         childOf(comment, "DIV")[1].innerHTML = "<textarea id=\"editing\" rows=\"10\"></textarea>";
-        let editing = childOf(childOf(childOf(comment, "DIV")[1], "DIV")[0], "TEXTAREA")[0];
-        editing.value = content;
+        let editing = childOf(childOf(comment, "DIV")[1], "TEXTAREA")[0];
+        editing.value = decodeURIComponent(content.plain_txt);
 
         stop_editing = function () {
+            if (editing.value != content.plain_txt) {
+                let cmt_id = parseInt(comment.getAttribute("cmt_id"));
+                update_comment(cmt_id, editing.value);
+            }
             turn_editing_to_comment(comment);
             stop_editing = null;
             editing_cmt = null;
@@ -550,13 +624,13 @@
             }
         });
 
-        /*
         comments.addEventListener("dblclick", function (e) {
             let info = get_comment_info(e.target);
             if (info != null) {
                 let filename = info[0];
                 let lineno = info[1];
                 let comment = info[2];
+                let cmt_id = info[3];
                 if (comment != editing_cmt) {
                     if(stop_editing)
                         stop_editing();
@@ -564,7 +638,6 @@
                 }
             }
         });
-        */
     }
     init_comment_action();
 
@@ -582,10 +655,19 @@
     do_requested_scroll_to_line();
 
     function markdown_content(content) {
-        let txt = childOf(content, "TEXTAREA")[0].value;
+        let txt = childOf(content, "TEXTAREA")[0].value.trim();
+        txt = txt.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
         let convert = new showdown.Converter();
         let html = convert.makeHtml(txt);
         content.innerHTML = html;
+
+        let div = document.createElement("div");
+        txt = txt.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        div.innerHTML = txt;
+        txt = div.textContent;
+
+        content.plain_txt = txt.trim();
     }
 
     function init_markdown_content() {
