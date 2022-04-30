@@ -12,8 +12,15 @@
       #code {
           flex: 70%;
       }
+      .right_big #code {
+          flex: 50%;
+      }
       #rightbar {
           flex: 20%;
+          position: relative;
+      }
+      .right_big #rightbar {
+          flex: 40%;
       }
       #userinfo {
           color: blue;
@@ -72,6 +79,9 @@
           width: 20%;
           height: 100%;
       }
+    .right_big #rightbar_inner {
+        width: 40%;
+    }
       #comments .comment .target {
           background: grey;
           color: white;
@@ -160,6 +170,24 @@
       .tooltip:hover .tooltiptext {
           visibility: visible;
       }
+
+      #right_size {
+          display: block;
+          position: absolute;
+          top: 0.2em;
+          left: -1.5em;
+      }
+      #right_size svg {
+          position: absolute;
+          left: 0em;
+      }
+
+      #right_size.expanded #right_expand {
+          visibility: hidden;
+      }
+      #right_size.shrinked #right_shrink {
+          visibility: hidden;
+      }
     </style>
   </head>
   <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
@@ -184,6 +212,14 @@
       </div>
       <div id="rightbar">
         <div id="rightbar_inner">
+        <div id="right_size" class="shrinked">
+          <svg id="right_expand" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-bar-left" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M12.5 15a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5zM10 8a.5.5 0 0 1-.5.5H3.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L3.707 7.5H9.5a.5.5 0 0 1 .5.5z"/>
+          </svg>
+          <svg id="right_shrink" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5z"/>
+          </svg>
+        </div>
           <div id="userinfo">
             {% if user %}
             User: {{ user }}
@@ -792,5 +828,30 @@
         });
     }
     init_discussion_action();
+
+    function init_right_size() {
+        let right_size = document.getElementById("right_size");
+        let size = getCookie("right_size");
+        let out = document.getElementById("out");
+        if (size == "big") {
+            right_size.className = "expanded";
+            out.className = "right_big";
+        }
+
+        setCookie("right_size", size); // refresh
+
+        right_size.addEventListener("click", function (evt) {
+            if (getCookie("right_size") == "big") {
+                right_size.className = "shrinked";
+                out.className = "";
+                setCookie("right_size", "small");
+            } else {
+                right_size.className = "expanded";
+                out.className = "right_big";
+                setCookie("right_size", "big");
+            }
+        });
+    }
+    init_right_size();
   </script>
 </html>
