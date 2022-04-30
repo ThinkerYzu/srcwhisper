@@ -330,9 +330,9 @@
         return cookieValue;
     }
 
-    function setCookie(name, value) {
+    function setCookie(name, value, secs) {
         const d = new Date();
-        d.setTime(d.getTime() + (3 * 60 * 1000));
+        d.setTime(d.getTime() + (secs * 1000));
         let expires = "expires="+d.toUTCString();
         document.cookie = name + '=' + encodeURIComponent(value) + ';' + expires + ';path=/';
     }
@@ -445,7 +445,7 @@
 
     function scroll_to_line(filename, lineno) {
         if (filename != rel_url) {
-            setCookie('whisper_scroll_lineno', lineno);
+            setCookie('whisper_scroll_lineno', lineno, 3 * 60);
 
             let url = "/" + site_rel_root + "/" + filename;
             window.location = url;
@@ -730,7 +730,7 @@
         lineno = parseInt(lineno);
         if (!lineno) return;
 
-        setCookie('whisper_scroll_lineno', 0);
+        setCookie('whisper_scroll_lineno', 0, 3 * 60);
         let filename = rel_url;
         activate_comment(filename, parseInt(lineno));
         scroll_to_line(filename, lineno);
@@ -839,17 +839,17 @@
         }
 
         if (size)
-            setCookie("right_size", size); // refresh
+            setCookie("right_size", size, 7 * 86400); // refresh
 
         right_size.addEventListener("click", function (evt) {
             if (getCookie("right_size") == "big") {
                 right_size.className = "shrinked";
                 out.className = "";
-                setCookie("right_size", "small");
+                setCookie("right_size", "small", 7 * 86400);
             } else {
                 right_size.className = "expanded";
                 out.className = "right_big";
-                setCookie("right_size", "big");
+                setCookie("right_size", "big", 7 * 86400);
             }
         });
     }
