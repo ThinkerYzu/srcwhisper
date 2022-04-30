@@ -51,7 +51,7 @@ def empty(request):
     discussions = [{'id': dis.id,
                     'title': dis.title,
                     'author': dis.user.username,
-                    'description': dis.description}
+                    'description': dis.description[:200]}
                    for dis in discussions]
     context = {'discussions': discussions}
     template = loader.get_template('whisper/empty.html');
