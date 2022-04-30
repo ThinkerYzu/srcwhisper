@@ -838,7 +838,8 @@
             out.className = "right_big";
         }
 
-        setCookie("right_size", size); // refresh
+        if (size)
+            setCookie("right_size", size); // refresh
 
         right_size.addEventListener("click", function (evt) {
             if (getCookie("right_size") == "big") {
