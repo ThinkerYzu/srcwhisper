@@ -38,6 +38,12 @@
           color: white;
           background: blue;
       }
+      .dir a::before {
+          content: url(data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiBjbGFzcz0iYmkgYmktZm9sZGVyIiB2aWV3Qm94PSIwIDAgMTYgMTYiPg0KICA8cGF0aCBkPSJNLjU0IDMuODcuNSAzYTIgMiAwIDAgMSAyLTJoMy42NzJhMiAyIDAgMCAxIDEuNDE0LjU4NmwuODI4LjgyOEEyIDIgMCAwIDAgOS44MjggM2gzLjk4MmEyIDIgMCAwIDEgMS45OTIgMi4xODFsLS42MzcgN0EyIDIgMCAwIDEgMTMuMTc0IDE0SDIuODI2YTIgMiAwIDAgMS0xLjk5MS0xLjgxOWwtLjYzNy03YTEuOTkgMS45OSAwIDAgMSAuMzQyLTEuMzF6TTIuMTkgNGExIDEgMCAwIDAtLjk5NiAxLjA5bC42MzcgN2ExIDEgMCAwIDAgLjk5NS45MWgxMC4zNDhhMSAxIDAgMCAwIC45OTUtLjkxbC42MzctN0ExIDEgMCAwIDAgMTMuODEgNEgyLjE5em00LjY5LTEuNzA3QTEgMSAwIDAgMCA2LjE3MiAySDIuNWExIDEgMCAwIDAtMSAuOTgxbC4wMDYuMTM5QzEuNzIgMy4wNDIgMS45NSAzIDIuMTkgM2g1LjM5NmwtLjcwNy0uNzA3eiIvPg0KPC9zdmc+);
+          position: relative;
+          top: 0.2em;
+          margin-right: 0.2em;
+      }
       .file a {
           color: green;
       }
@@ -126,6 +132,34 @@
       #discussion_list .dis_desc_content {
           font-style: italic;
       }
+      .tooltip {
+          position: relative;
+          display: inline-block;
+      }
+
+      .tooltip .tooltiptext {
+          visibility: hidden;
+          /* width: 10px; */
+          background-color: white;
+          color: grey;
+          text-align: center;
+          border-radius: 3px;
+          border-color: grey;
+          border-style: solid;
+          border-width: 1px;
+          padding: 2px 5px;
+          margin-left: 0.3em;
+          margin-top: 1.3em;
+          font-size: 0.8em;
+
+          /* Position the tooltip */
+          position: absolute;
+          z-index: 1;
+      }
+
+      .tooltip:hover .tooltiptext {
+          visibility: visible;
+      }
     </style>
   </head>
   <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
@@ -153,10 +187,20 @@
           <div id="userinfo">
             {% if user %}
             User: {{ user }}
-            <a href="/accounts/logout">[Logout]</a>
+            <a class="tooltip" href="/accounts/logout"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16" transform="translate(0, 2)">
+    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+    </svg><span class="tooltiptext">Logout</span></a>
             {% else %}
-            <a href="/accounts/login">Login</a> /
-            <a href="/register">Sign-up</a>
+    <a href="/accounts/login" class="tooltip"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-right" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
+    <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+    </svg>
+    <span class="tooltiptext">Login</span></a> &nbsp;
+    <a href="/register" class="tooltip"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+    </svg><span class="tooltiptext">Sign&nbsp;up</span></a>
             {% endif %}
           </div>
           {% if discussion_id %}
