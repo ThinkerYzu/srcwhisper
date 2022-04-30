@@ -174,10 +174,6 @@
             <a href="/user_code/upload_file/{{ discussion_id }}">
               Upload Code
             </a>
-            {% if discussion_user == user %}
-            /
-            <a href="/whisper/update_discussion/{{ discussion_id }}">Modfy</a>
-            {% endif %}
           </div>
           {% endif %}
           <div id="comments">
@@ -214,6 +210,11 @@
     var src_filename = "{{ filename }}";
     var site_cmtpath = "{{ site_cmtpath }}";
     var discussion_id = "{{ discussion_id }}";
+
+    function escapeHTML(txt) {
+        txt = txt.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return txt;
+    }
 
     function must_login(reason) {
         alert("Please login before " + reason + "!");
@@ -658,14 +659,14 @@
 
     function markdown_content(content) {
         let txt = childOf(content, "TEXTAREA")[0].value.trim();
-        txt = txt.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        txt = escapeHTML(txt);
 
         let convert = new showdown.Converter();
         let html = convert.makeHtml(txt);
         content.innerHTML = html;
 
         let div = document.createElement("div");
-        txt = txt.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        txt = escapeHTML(txt);
         div.innerHTML = txt;
         txt = div.textContent;
 
@@ -681,6 +682,8 @@
 
         let description = document.getElementById("discussion_description");
         if (description) {
+            description.plain_txt = description.textContent;
+
             let txt = description.innerHTML;
             let convert = new showdown.Converter();
             let html = convert.makeHtml(txt);
@@ -688,5 +691,62 @@
         }
     }
     init_markdown_content();
+
+    function turn_discussion_to_editing(dinfo) {
+        if (stop_editing && editing_cmt != dinfo)
+            stop_editing();
+
+        let author_div = childOf(dinfo, "DIV")[1];
+        let author = author_div.textContent.replace("Author: ", "").trim();
+        if (author != user_name)
+            return;
+
+        let subject_div = childOf(dinfo, "DIV")[0];
+        let description_div = childOf(dinfo, "DIV")[2];
+        let subject_v =
+            subject_div.textContent.replace("Subject: ", "").trim();
+        let description_v = description_div.plain_txt;
+        subject_div.innerHTML = "Subject: <input type=\"text\"/>";
+        let subject_input = childOf(subject_div, "INPUT")[0];
+        subject_input.value = subject_v;
+
+        description_div.innerHTML = "<textarea id=\"editing\" rows=\"10\"></textarea><br><input type=\"submit\" value=\"Submit\"/>";
+        let description_textarea = childOf(description_div, "TEXTAREA")[0];
+        description_textarea.value = description_v;
+
+        stop_editing = function () {
+            let csrftoken = getCookie("csrftoken");
+            let url = "/whisper/update_discussion/" + discussion_id;
+            let params = "title=" + encodeURI(subject_input.value) +
+                "&description=" + encodeURI(description_textarea.value);
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type",
+                                 "application/x-www-form-urlencoded");
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            xhr.send(params);
+
+            subject_div.innerHTML = "Subject: " + escapeHTML(subject_input.value);
+            markdown_content(description_div);
+
+            stop_editing = null;
+            editing_cmt = null;
+        };
+        editing_cmt = dinfo;
+
+        let submit_btn = childOf(description_div, "INPUT")[0];
+        submit_btn.addEventListener("click", stop_editing);
+    }
+
+    function init_discussion_action() {
+        let dinfo = document.getElementById("discussion_info");
+        if (!dinfo)
+            return;
+        dinfo.addEventListener("dblclick", function (evt) {
+            turn_discussion_to_editing(dinfo);
+            evt.stopPropagation();
+        });
+    }
+    init_discussion_action();
   </script>
 </html>
