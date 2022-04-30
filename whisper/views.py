@@ -231,7 +231,7 @@ def update_discussion(request, path):
         title = title[:128]
         pass
     description = request.POST['description']
-    if len(description) > 512:
+    if len(description) > settings.DISCUSSION_MAX_LENGTH:
         description = description[:512]
         pass
 

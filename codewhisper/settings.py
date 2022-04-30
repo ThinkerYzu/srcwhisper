@@ -131,3 +131,5 @@ WHISPER_REPO_PATH = os.path.join(BASE_DIR, 'whisper_repo')
 EMPTY_MAX_DISCUSSIONS = 20
 
 USER_CODE_REPO = os.path.join(BASE_DIR, 'whisper_user_code')
+
+DISCUSSION_MAX_LENGTH = 100 * 1024
