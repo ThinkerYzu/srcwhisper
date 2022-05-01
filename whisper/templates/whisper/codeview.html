@@ -24,6 +24,12 @@
       }
       #userinfo {
           color: blue;
+          position: fixed;
+          width: 20%;
+          background: white;
+      }
+      .right_big #userinfo {
+          width: 40%;
       }
       #new_discussion {
           margin-top: 0.5em;
@@ -78,6 +84,8 @@
           position: fixed;
           width: 20%;
           height: 100%;
+          overflow: auto;
+          margin-left: 1.5em;
       }
     .right_big #rightbar_inner {
         width: 40%;
@@ -131,6 +139,7 @@
       }
       #discussion_info {
           margin-bottom: 1em;
+          margin-top: 1.5em;
       }
       .discussion_entry {
           margin-left: 1em;
@@ -174,8 +183,6 @@
       #right_size {
           display: block;
           position: absolute;
-          top: 0.2em;
-          left: -1.5em;
       }
       #right_size svg {
           position: absolute;
@@ -211,7 +218,6 @@
         {{ source|safe }}
       </div>
       <div id="rightbar">
-        <div id="rightbar_inner">
         <div id="right_size" class="shrinked">
           <svg id="right_expand" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-bar-left" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M12.5 15a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5zM10 8a.5.5 0 0 1-.5.5H3.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L3.707 7.5H9.5a.5.5 0 0 1 .5.5z"/>
@@ -220,6 +226,7 @@
             <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5z"/>
           </svg>
         </div>
+        <div id="rightbar_inner">
           <div id="userinfo">
             {% if user %}
             User: {{ user }}
@@ -239,13 +246,13 @@
     </svg><span class="tooltiptext">Sign&nbsp;up</span></a>
             {% endif %}
           </div>
-          {% if discussion_id %}
           <div id="discussion_info">
+            {% if discussion_id %}
             <div id="discussion_title">Subject: {{ discussion_title|escape }}</div>
             <div id="discussion_author" user="{{ discussion_user }}">Author: {{ discussion_user|escape }}</div>
             <div id="discussion_description">{{ discussion_description|escape }}</div>
+            {% endif %}
           </div>
-          {% endif %}
           {% if discussion_id == 0 %}
           <div id="new_discussion"><a href="/{{ site_newdiscusspath }}">Start New Discussion</a></div>
           {% else %}
