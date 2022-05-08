@@ -251,7 +251,7 @@
           <div id="discussion_info">
             {% if discussion_id %}
             <div id="discussion_title">Subject: {{ discussion_title|escape }}</div>
-            <div id="discussion_author" user="{{ discussion_user }}">Author: {{ discussion_user|escape }}</div>
+            <div id="discussion_author" user="{{ discussion_user }}">Author: <a href="/whisper/user/{{ discussion_user|escape }}/discussions">{{ discussion_user|escape }}</a></div>
             <div id="discussion_description">{{ discussion_description|escape }}</div>
             {% endif %}
           </div>
