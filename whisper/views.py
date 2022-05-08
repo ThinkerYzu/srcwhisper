@@ -90,6 +90,13 @@ def show_view(request, path, site_rel_root, site_cmtpath,
         source = empty(request)
         pass
 
+    return render_view(request, path, site_rel_root, site_cmtpath,
+                       site_newdiscusspath,
+                       discussion_id, comments, filename, source, origin)
+
+def render_view(request, path, site_rel_root, site_cmtpath,
+                site_newdiscusspath,
+                discussion_id, comments, filename, source, origin):
     if '_auth_user_id' in request.session:
         user = User.objects.get(pk=request.session['_auth_user_id'])
         username = user.username
@@ -256,6 +263,36 @@ def update_discussion(request, path):
 
     return redirect('/whisper/discuss/' + str(discussion.id) + '/p/')
 
+def show_user_discussions(request, user_name):
+    user = User.objects.get(username=user_name)
+    discussions = \
+        Discussion.objects.filter(user=user).order_by('publish_time').reverse()[:25]
+    discussions = [
+        {
+            'id': discuss.id,
+            'title': discuss.title,
+            'description': discuss.description,
+        }
+        for discuss in discussions]
+    context = {
+        'user_name': user.username,
+        'discussions': discussions
+        }
+    discussion_list = \
+        loader.get_template('whisper/user_discussions.html').render(context)
+
+    return render_view(request, '', 'whisper/code', 'whiper/comment',
+                       'whisper/new_discussion',
+                       0, [], '', discussion_list, '')
+
+def user_functions(request, path):
+    parts = path.split('/')
+    user = parts[1]
+    func = parts[2]
+    if func == 'discussions':
+        return show_user_discussions(request, user)
+    return redirect('/whisper/code')
+
 @ensure_csrf_cookie
 def index(request, **kws):
     try:
@@ -308,6 +345,8 @@ def index(request, **kws):
         if '_auth_user_id' not in request.session:
             return redirect('/accounts/login')
         return update_discussion(request, path)
+    elif func == 'user':
+        return user_functions(request, path)
     else:
         return redirect('/whisper/code')
 

@@ -1,0 +1,16 @@
+<div class="code"><div class="source">
+</div></div>
+
+<div id="discussion_list">
+  <h3>{{ user_name|escape }}'s Recent Discussions</h3>
+  {% for discuss in discussions %}
+  <div class="discussion_entry">
+    <a href="/whisper/discuss/{{ discuss.id }}/p">
+      {{ discuss.title }}
+    </a>
+    <div class="discussion_description">
+      <span class="dis_desc_content">{{ discuss.description|escape }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
