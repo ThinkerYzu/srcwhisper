@@ -271,7 +271,7 @@ def show_user_discussions(request, user_name):
         {
             'id': discuss.id,
             'title': discuss.title,
-            'description': discuss.description,
+            'description': discuss.description[:200],
         }
         for discuss in discussions]
     context = {
