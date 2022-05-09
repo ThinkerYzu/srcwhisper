@@ -648,6 +648,9 @@
         while ((comment.parentNode != comments &&
                 comment.parentNode.className != "replys") ||
                comment.className.indexOf("comment") < 0) {
+            if (comment.nodeName == "A") {
+                return null;
+            }
             comment = comment.parentNode;
             if (comment.parentNode == null) {
                 return null;
